@@ -151,11 +151,22 @@ def load_constitution() -> str | None:
 
 def get_spec_directory(issue_number: int, issue_title: str) -> str:
     """Generate spec directory path from issue number and title."""
-    # Sanitize title for directory name
-    slug = issue_title.lower()
-    slug = "".join(c if c.isalnum() or c == " " else "" for c in slug)
-    slug = "-".join(slug.split())[:50]
+    slug = sanitize_title(issue_title)
     return f".specify/specs/{issue_number:03d}-{slug}"
+
+
+def sanitize_title(title: str, max_length: int = 50) -> str:
+    """Sanitize a title for use in branch names or directory names."""
+    slug = title.lower()
+    slug = "".join(c if c.isalnum() or c == " " else "" for c in slug)
+    slug = "-".join(slug.split())[:max_length]
+    return slug
+
+
+def get_feature_branch(issue_number: int, issue_title: str) -> str:
+    """Generate feature branch name from issue number and title."""
+    slug = sanitize_title(issue_title, max_length=30)
+    return f"feature/{issue_number}-{slug}"
 
 
 # ============================================================================
@@ -197,6 +208,7 @@ def build_context(event: dict, event_name: str) -> dict:
             "labels": [l.get("name") for l in issue.get("labels", [])],
             "repository": repo,
             "spec_directory": get_spec_directory(issue_number, issue_title),
+            "feature_branch": get_feature_branch(issue_number, issue_title),
         }
         
         # Include comment if this is a comment event
@@ -313,19 +325,27 @@ def main():
     skill_content = load_skill(skill_name)
     constitution = load_constitution()
     
-    # Determine branch (use feature branch if available)
-    branch = "main"
-    if context.get("spec_directory"):
-        # For spec-driven work, we might want to use a feature branch
-        branch = f"feature/{context['number']}-{context['title'][:30].lower().replace(' ', '-')}"
+    # Determine branch - ALL issue-related work happens on feature branches
+    # Only PR reviews use the existing PR branch
+    if context.get("feature_branch"):
+        # Issue-related work: specs, plans, tasks, and implementation all go to feature branch
+        branch = context["feature_branch"]
+    elif context.get("pr_branch"):
+        # PR review: use the existing PR branch
+        branch = context["pr_branch"]
+    else:
+        branch = "main"
     
-    # Check if this is a label-triggered event (needs tracking comment)
+    # Check if this needs a tracking comment (new issue or label-triggered)
+    is_new_issue = event_name == "issues" and event_action == "opened"
     is_label_triggered = event_action == "labeled" and event_label
+    needs_tracking = is_new_issue or is_label_triggered
+    
     issue_number = context.get("number")
     repo = context.get("repository", "")
     
     # Add tracking comment marker to context so agent knows to update it
-    if is_label_triggered:
+    if needs_tracking:
         context["tracking_comment_marker"] = TRACKING_COMMENT_MARKER
     
     # Build prompt with full context
@@ -337,7 +357,7 @@ def main():
     result = workspace.create_conversation(
         initial_message=prompt,
         repository=repo,
-        branch=branch if skill_name == "implement" else "main",
+        branch=branch,
         title=f"[{skill_name}] #{context.get('number', '')} {context.get('title', context.get('pr_title', 'Task'))}",
     )
     
@@ -345,11 +365,12 @@ def main():
     conversation_url = workspace.get_conversation_url(conversation_id)
     
     print(f"OpenHands conversation started: {conversation_url}")
+    print(f"Working on branch: {branch}")
     
-    # Create tracking comment for label-triggered events on issues
+    # Create tracking comment for new issues and label-triggered events
     tracking_comment_id = None
     
-    if github_token and is_label_triggered and issue_number and repo:
+    if github_token and needs_tracking and issue_number and repo:
         try:
             github = GitHubClient(github_token)
             comment = create_tracking_comment(github, repo, issue_number, conversation_url)

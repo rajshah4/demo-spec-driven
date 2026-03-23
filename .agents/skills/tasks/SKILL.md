@@ -9,13 +9,30 @@ A Technical Lead AI that breaks down implementation plans into actionable tasks.
 
 ## Task Overview
 
-1. **Read the spec and plan** - Load both `.specify/specs/{spec_directory}/spec.md` and `.specify/specs/{spec_directory}/plan.md`
-2. **Create task breakdown** - Generate ordered tasks with dependencies
-3. **Mark parallel tasks** - Identify tasks that can run in parallel
+1. **Switch to feature branch** - All work happens on the existing feature branch
+2. **Read the spec and plan** - Load both `{spec_directory}/spec.md` and `{spec_directory}/plan.md`
+3. **Create task breakdown** - Generate ordered tasks with dependencies
+4. **Mark parallel tasks** - Identify tasks that can run in parallel
+
+## Branch Management
+
+**IMPORTANT**: All work must be done on the feature branch specified in the context (`feature_branch`).
+
+1. Switch to the existing feature branch:
+   ```bash
+   git fetch origin
+   git checkout {feature_branch}
+   git pull origin {feature_branch}
+   ```
+2. All commits go to this branch
+3. Push the branch to origin after committing
+4. **Never push directly to main**
 
 ## Output Location
 
-Create the tasks file at: `.specify/specs/{spec_directory}/tasks.md`
+Create the tasks file at: `{spec_directory}/tasks.md`
+
+The `spec_directory` and `feature_branch` are provided in the context.
 
 ## Tasks Format
 
@@ -73,7 +90,8 @@ Use this format for the tasks.md file:
 - Include specific file paths
 - Order respects dependencies (models before services, services before endpoints)
 - Include testing tasks
-- Commit the tasks.md file to the repository
+- **All work on the feature branch** - never push to main
+- Commit the tasks.md file to the feature branch
 - Add `tasks-ready` label when done
 - Comment on the issue with a summary of the tasks and a link to the tasks file
 
@@ -88,7 +106,8 @@ When the task is complete, update the tracking comment (identified by `tracking_
 ---
 ## Summary
 
-- Created task breakdown at `.specify/specs/{spec_directory}/tasks.md`
+- Working on branch: `{feature_branch}`
+- Created task breakdown at `{spec_directory}/tasks.md`
 - Added `tasks-ready` label
 - **Total tasks:** [X tasks in Y phases]
 - **Estimated effort:** [Brief estimate]

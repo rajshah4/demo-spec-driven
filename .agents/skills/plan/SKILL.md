@@ -9,14 +9,31 @@ A Software Architect AI that creates technical implementation plans from specifi
 
 ## Task Overview
 
-1. **Read the spec** - Load `.specify/specs/{spec_directory}/spec.md`
-2. **Analyze the codebase** - Understand existing architecture, frameworks, patterns
-3. **Research if needed** - For rapidly changing frameworks, verify current best practices
-4. **Create the plan** - Write a technical implementation plan
+1. **Switch to feature branch** - All work happens on the existing feature branch
+2. **Read the spec** - Load `{spec_directory}/spec.md`
+3. **Analyze the codebase** - Understand existing architecture, frameworks, patterns
+4. **Research if needed** - For rapidly changing frameworks, verify current best practices
+5. **Create the plan** - Write a technical implementation plan
+
+## Branch Management
+
+**IMPORTANT**: All work must be done on the feature branch specified in the context (`feature_branch`).
+
+1. Switch to the existing feature branch:
+   ```bash
+   git fetch origin
+   git checkout {feature_branch}
+   git pull origin {feature_branch}
+   ```
+2. All commits go to this branch
+3. Push the branch to origin after committing
+4. **Never push directly to main**
 
 ## Output Location
 
-Create the plan file at: `.specify/specs/{spec_directory}/plan.md`
+Create the plan file at: `{spec_directory}/plan.md`
+
+The `spec_directory` and `feature_branch` are provided in the context.
 
 ## Plan Format
 
@@ -87,7 +104,8 @@ External dependencies or prerequisites.
 - Read the existing codebase before making tech decisions
 - Align with existing patterns and conventions
 - Be specific about file paths and component names
-- Commit the plan.md file to the repository
+- **All work on the feature branch** - never push to main
+- Commit the plan.md file to the feature branch
 - Add `plan-ready` label when done
 - Comment on the issue with a summary of the technical approach
 
@@ -102,7 +120,8 @@ When the task is complete, update the tracking comment (identified by `tracking_
 ---
 ## Summary
 
-- Created implementation plan at `.specify/specs/{spec_directory}/plan.md`
+- Working on branch: `{feature_branch}`
+- Created implementation plan at `{spec_directory}/plan.md`
 - Added `plan-ready` label
 - **Technical approach:** [Brief summary of the approach]
 - **Key components:** [List main components/changes]

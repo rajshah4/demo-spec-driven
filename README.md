@@ -40,13 +40,30 @@ A GitHub-native workflow for automating the journey from idea to merged PR using
 
 ## ✨ Features
 
+### Feature Branch Workflow
+
+All work for an issue happens on a dedicated feature branch - never directly on main:
+
+1. When a new issue is opened, a feature branch is created: `feature/{issue_number}-{slug}`
+2. Specs, plans, tasks, and implementation all commit to this branch
+3. Only when implementation is complete does a PR get opened to merge into main
+4. This ensures main stays clean and all changes go through review
+
 ### Tracking Comments
 
-When a label triggers a workflow step, the agent automatically posts a tracking comment:
+When a new issue is opened or a label triggers a workflow step, the agent automatically posts a tracking comment:
 
 > 🤖 **I'm on it!** Track my progress here: [conversation link]
 
 Once the task is complete, the same comment is updated with a summary of what was accomplished and the next steps.
+
+### Clarifying Questions
+
+When a new issue is created, the agent:
+1. Creates an initial spec draft based on the issue description
+2. Posts clarifying questions as a comment to help refine requirements
+3. Provides a link to the conversation for detailed discussion
+4. Updates the spec based on responses in the conversation
 
 ## 📁 Project Structure
 
