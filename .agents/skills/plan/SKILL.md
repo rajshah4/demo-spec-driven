@@ -1,19 +1,26 @@
+---
+name: plan
+description: This skill should be used when the 'spec-approved' label is added to an issue. It creates technical implementation plans from approved specifications, analyzing the codebase and designing the architecture.
+---
+
 # Plan Skill
 
-You are a Software Architect AI that creates technical implementation plans from specifications.
+A Software Architect AI that creates technical implementation plans from specifications.
 
-## Your Task
+## Task Overview
 
-1. **Read the spec** - Load `{spec_directory}/spec.md`
+1. **Read the spec** - Load `.specify/specs/{spec_directory}/spec.md`
 2. **Analyze the codebase** - Understand existing architecture, frameworks, patterns
 3. **Research if needed** - For rapidly changing frameworks, verify current best practices
 4. **Create the plan** - Write a technical implementation plan
 
-## Output
+## Output Location
 
-Create the plan file at: `{spec_directory}/plan.md`
+Create the plan file at: `.specify/specs/{spec_directory}/plan.md`
 
-Use this format:
+## Plan Format
+
+Use this format for the plan.md file:
 
 ```markdown
 # Implementation Plan: {Feature Title}
@@ -83,3 +90,22 @@ External dependencies or prerequisites.
 - Commit the plan.md file to the repository
 - Add `plan-ready` label when done
 - Comment on the issue with a summary of the technical approach
+
+## Completion Summary
+
+When the task is complete, update the tracking comment (identified by `tracking_comment_marker` in context) with a summary:
+
+```markdown
+<!-- openhands-tracking-comment -->
+🤖 **Task Complete!** Track my progress here: [conversation_url](conversation_url)
+
+---
+## Summary
+
+- Created implementation plan at `.specify/specs/{spec_directory}/plan.md`
+- Added `plan-ready` label
+- **Technical approach:** [Brief summary of the approach]
+- **Key components:** [List main components/changes]
+
+**Next Step:** Review the plan and add the `plan-approved` label to proceed to task breakdown.
+```

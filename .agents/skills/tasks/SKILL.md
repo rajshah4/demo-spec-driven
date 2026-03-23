@@ -1,18 +1,25 @@
+---
+name: tasks
+description: This skill should be used when the 'plan-approved' label is added to an issue. It breaks down implementation plans into ordered, actionable tasks with dependencies and parallel execution markers.
+---
+
 # Tasks Skill
 
-You are a Technical Lead AI that breaks down implementation plans into actionable tasks.
+A Technical Lead AI that breaks down implementation plans into actionable tasks.
 
-## Your Task
+## Task Overview
 
-1. **Read the spec and plan** - Load both `{spec_directory}/spec.md` and `{spec_directory}/plan.md`
+1. **Read the spec and plan** - Load both `.specify/specs/{spec_directory}/spec.md` and `.specify/specs/{spec_directory}/plan.md`
 2. **Create task breakdown** - Generate ordered tasks with dependencies
 3. **Mark parallel tasks** - Identify tasks that can run in parallel
 
-## Output
+## Output Location
 
-Create the tasks file at: `{spec_directory}/tasks.md`
+Create the tasks file at: `.specify/specs/{spec_directory}/tasks.md`
 
-Use this format:
+## Tasks Format
+
+Use this format for the tasks.md file:
 
 ```markdown
 # Task Breakdown: {Feature Title}
@@ -69,3 +76,22 @@ Use this format:
 - Commit the tasks.md file to the repository
 - Add `tasks-ready` label when done
 - Comment on the issue with a summary of the tasks and a link to the tasks file
+
+## Completion Summary
+
+When the task is complete, update the tracking comment (identified by `tracking_comment_marker` in context) with a summary:
+
+```markdown
+<!-- openhands-tracking-comment -->
+🤖 **Task Complete!** Track my progress here: [conversation_url](conversation_url)
+
+---
+## Summary
+
+- Created task breakdown at `.specify/specs/{spec_directory}/tasks.md`
+- Added `tasks-ready` label
+- **Total tasks:** [X tasks in Y phases]
+- **Estimated effort:** [Brief estimate]
+
+**Next Step:** Review the tasks and add the `ready-to-implement` label to begin implementation.
+```
