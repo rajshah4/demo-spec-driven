@@ -49,13 +49,13 @@ All work for an issue happens on a dedicated feature branch - never directly on 
 3. Only when implementation is complete does a PR get opened to merge into main
 4. This ensures main stays clean and all changes go through review
 
-### Tracking Comments
+### Step Comments
 
-When a new issue is opened or a label triggers a workflow step, the agent automatically posts a tracking comment:
+When a new issue is opened or a label triggers a workflow step, the agent automatically posts a step-specific acknowledgement comment:
 
-> 🤖 **I'm on it!** Track my progress here: [conversation link]
+> OK, working on `spec`. [Track my progress here](conversation link).
 
-Once the task is complete, the same comment is updated with a summary of what was accomplished and the next steps.
+After each step finishes (spec, plan, task, implement), the agent posts a new issue comment with that step's details and the next steps instead of editing the earlier acknowledgement comment.
 
 ### Clarifying Questions
 

@@ -53,5 +53,30 @@ For each task:
 
 ## After Implementation
 
-- Comment on the issue with PR link
+- Post a new issue comment with implementation details and the PR link
 - Add `implementation-complete` label to the issue
+
+## Step Details Comment
+
+When the implementation step is complete, post a new issue comment that includes:
+
+- The branch you worked on: `{feature_branch}`
+- A concise summary of the implementation
+- The tests you ran and their results
+- The draft PR link
+- Confirmation that `implementation-complete` was added
+- Any notable follow-up items or reviewer callouts
+
+Example format:
+
+```markdown
+## 🧾 Implement Step Complete
+
+- Working on branch: `{feature_branch}`
+- **Implementation summary:** [Brief summary]
+- **Tests:** [List tests and outcomes]
+- **Draft PR:** [Link]
+- Added `implementation-complete` label
+
+**Next Step:** Review the draft PR, leave feedback, and iterate there.
+```

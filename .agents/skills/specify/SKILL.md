@@ -120,22 +120,33 @@ Your answers will help me refine the spec before moving to the planning phase.
 If users provide responses in the conversation:
 1. Update the spec.md file based on their feedback
 2. Commit the changes to the feature branch
-3. Update the tracking comment with what was changed
+3. Post a new issue comment summarizing what changed and any remaining open questions
 
-## Completion Summary
+## Step Details Comment
 
-When the task is complete, update the tracking comment (identified by `tracking_comment_marker` in context) with a summary:
+When the spec step is complete, post a new issue comment with the details of the step. Include:
+
+- The feature branch you used
+- The path to `{spec_directory}/spec.md`
+- Confirmation that `spec-ready` was added
+- A concise summary of the spec scope
+- The clarifying questions that still need answers, if any
+- The next step for the user (`spec-approved`)
+
+Example format:
 
 ```markdown
-<!-- openhands-tracking-comment -->
-🤖 **Task Complete!** Track my progress here: [conversation_url](conversation_url)
-
----
-## Summary
+## 🧾 Spec Step Complete
 
 - Created feature branch: `{feature_branch}`
 - Created specification at `{spec_directory}/spec.md`
 - Added `spec-ready` label
+- **Scope summary:** [Brief summary]
 
-**Next Step:** Review the spec, answer any clarifying questions, then add the `spec-approved` label to proceed to planning.
+## ❓ Open Questions
+
+- [Question 1]
+- [Question 2]
+
+**Next Step:** Review the spec, answer any open questions, then add the `spec-approved` label to proceed to planning.
 ```

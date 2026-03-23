@@ -107,17 +107,23 @@ External dependencies or prerequisites.
 - **All work on the feature branch** - never push to main
 - Commit the plan.md file to the feature branch
 - Add `plan-ready` label when done
-- When the task is complete, update the tracking comment (identified by `tracking_comment_marker` in context) with what's in the `Completion Summary` section
+- When the plan step is complete, post a new issue comment with the details from the `Step Details Comment` section
 
-## Completion Summary
+## Step Details Comment
 
+When the plan step is complete, post a new issue comment that includes:
+
+- The branch you worked on: `{feature_branch}`
+- The path to `{spec_directory}/plan.md`
+- Confirmation that `plan-ready` was added
+- A brief summary of the technical approach
+- The key components or files affected
+- The next step for the user (`plan-approved`)
+
+Example format:
 
 ```markdown
-<!-- openhands-tracking-comment -->
-🤖 **Task Complete!** Track my progress here: [conversation_url](conversation_url)
-
----
-## Summary
+## 🧾 Plan Step Complete
 
 - Working on branch: `{feature_branch}`
 - Created implementation plan at `{spec_directory}/plan.md`

@@ -4,10 +4,10 @@ OpenHands Agent Runner - Routes GitHub events to appropriate skills.
 
 This script:
 1. Parses the GitHub event to determine which skill to invoke
-2. Creates a tracking comment on the issue with conversation URL
-3. Constructs a self-contained prompt with full context
-4. Creates an OpenHands Cloud conversation to execute the skill
-5. The agent will update the tracking comment with a summary when done
+2. Constructs a self-contained prompt with full context
+3. Creates an OpenHands Cloud conversation to execute the skill
+4. Posts a step-specific acknowledgement comment with the conversation URL
+5. Lets the agent add separate follow-up comments with step results
 """
 
 import json
@@ -74,17 +74,6 @@ class GitHubClient:
         resp.raise_for_status()
         return resp.json()
     
-    def update_issue_comment(self, repo: str, comment_id: int, body: str) -> dict:
-        """Update an existing comment."""
-        resp = httpx.patch(
-            f"{GITHUB_API_URL}/repos/{repo}/issues/comments/{comment_id}",
-            headers=self.headers,
-            json={"body": body},
-            timeout=30,
-        )
-        resp.raise_for_status()
-        return resp.json()
-
 
 class OpenHandsCloudWorkspace:
     """Minimal client for creating OpenHands Cloud conversations."""
@@ -270,20 +259,32 @@ def build_prompt(skill_content: str, context: dict, constitution: str | None) ->
 
 
 # ============================================================================
-# TRACKING COMMENT
+# STEP COMMENTS
 # ============================================================================
 
-TRACKING_COMMENT_MARKER = "<!-- openhands-tracking-comment -->"
+STEP_DISPLAY_NAMES = {
+    "specify": "spec",
+    "plan": "plan",
+    "tasks": "task",
+    "implement": "implement",
+}
 
 
-def create_tracking_comment(github: GitHubClient, repo: str, issue_number: int, conversation_url: str) -> dict:
-    """Create a tracking comment on the issue with the conversation URL."""
-    body = f"""{TRACKING_COMMENT_MARKER}
-🤖 **I'm on it!** Track my progress here: [{conversation_url}]({conversation_url})
+def get_step_display_name(skill_name: str) -> str:
+    """Get the user-facing name for a workflow step."""
+    return STEP_DISPLAY_NAMES.get(skill_name, skill_name)
 
----
-_This comment will be updated with a summary once the task is complete._
-"""
+
+def create_step_started_comment(
+    github: GitHubClient,
+    repo: str,
+    issue_number: int,
+    conversation_url: str,
+    skill_name: str,
+) -> dict:
+    """Create a step-specific acknowledgement comment on the issue."""
+    step_name = get_step_display_name(skill_name)
+    body = f"OK, working on `{step_name}`. [Track my progress here]({conversation_url})."
     return github.create_issue_comment(repo, issue_number, body)
 
 
@@ -300,7 +301,7 @@ def main():
     
     github_token = os.environ.get("GITHUB_TOKEN")
     if not github_token:
-        print("WARNING: GITHUB_TOKEN not set, tracking comments disabled")
+        print("WARNING: GITHUB_TOKEN not set, step comments disabled")
     
     event_name = os.environ.get("EVENT_NAME", "")
     event_action = os.environ.get("EVENT_ACTION", "")
@@ -336,17 +337,13 @@ def main():
     else:
         branch = "main"
     
-    # Check if this needs a tracking comment (new issue or label-triggered)
+    # Check if this needs a step-started comment (new issue or label-triggered)
     is_new_issue = event_name == "issues" and event_action == "opened"
     is_label_triggered = event_action == "labeled" and event_label
-    needs_tracking = is_new_issue or is_label_triggered
+    needs_step_comment = is_new_issue or is_label_triggered
     
     issue_number = context.get("number")
     repo = context.get("repository", "")
-    
-    # Add tracking comment marker to context so agent knows to update it
-    if needs_tracking:
-        context["tracking_comment_marker"] = TRACKING_COMMENT_MARKER
     
     # Build prompt with full context
     prompt = build_prompt(skill_content, context, constitution)
@@ -367,17 +364,14 @@ def main():
     print(f"OpenHands conversation started: {conversation_url}")
     print(f"Working on branch: {branch}")
     
-    # Create tracking comment for new issues and label-triggered events
-    tracking_comment_id = None
-    
-    if github_token and needs_tracking and issue_number and repo:
+    # Create a step-started comment for new issues and label-triggered events
+    if github_token and needs_step_comment and issue_number and repo:
         try:
             github = GitHubClient(github_token)
-            comment = create_tracking_comment(github, repo, issue_number, conversation_url)
-            tracking_comment_id = comment.get("id")
-            print(f"Created tracking comment: {tracking_comment_id}")
+            comment = create_step_started_comment(github, repo, issue_number, conversation_url, skill_name)
+            print(f"Created step comment: {comment.get('id')}")
         except Exception as e:
-            print(f"WARNING: Failed to create tracking comment: {e}")
+            print(f"WARNING: Failed to create step comment: {e}")
     
     # Output for GitHub Actions
     github_output = os.environ.get("GITHUB_OUTPUT")
@@ -385,8 +379,6 @@ def main():
         with open(github_output, "a") as f:
             f.write(f"conversation_url={conversation_url}\n")
             f.write(f"skill={skill_name}\n")
-            if tracking_comment_id:
-                f.write(f"tracking_comment_id={tracking_comment_id}\n")
 
 
 if __name__ == "__main__":
