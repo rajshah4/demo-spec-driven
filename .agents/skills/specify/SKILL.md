@@ -110,14 +110,7 @@ I've created an initial specification based on the issue description. You can fi
 
 ## ❓ Clarifying Questions
 
-To help refine this specification, I have a few questions:
-
-1. **[Question about scope]** - ...?
-2. **[Question about user experience]** - ...?
-3. **[Question about edge cases]** - ...?
-4. **[Question about priorities]** - ...?
-
-💬 **Please respond in the conversation** to discuss these questions: [conversation_url]
+[ Post a bulleted list of clarifying questions ]
 
 Your answers will help me refine the spec before moving to the planning phase.
 ```
@@ -142,7 +135,6 @@ When the task is complete, update the tracking comment (identified by `tracking_
 
 - Created feature branch: `{feature_branch}`
 - Created specification at `{spec_directory}/spec.md`
-- Posted clarifying questions for refinement
 - Added `spec-ready` label
 
 **Next Step:** Review the spec, answer any clarifying questions, then add the `spec-approved` label to proceed to planning.

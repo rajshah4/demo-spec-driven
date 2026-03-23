@@ -93,11 +93,10 @@ Use this format for the tasks.md file:
 - **All work on the feature branch** - never push to main
 - Commit the tasks.md file to the feature branch
 - Add `tasks-ready` label when done
-- Comment on the issue with a summary of the tasks and a link to the tasks file
+- When the task is complete, update the tracking comment (identified by `tracking_comment_marker` in context) with what's in the `Completion Summary` section.
 
 ## Completion Summary
 
-When the task is complete, update the tracking comment (identified by `tracking_comment_marker` in context) with a summary:
 
 ```markdown
 <!-- openhands-tracking-comment -->
@@ -111,6 +110,9 @@ When the task is complete, update the tracking comment (identified by `tracking_
 - Added `tasks-ready` label
 - **Total tasks:** [X tasks in Y phases]
 - **Estimated effort:** [Brief estimate]
+
+## Tasks
+[ Bulleted summary of tasks ]
 
 **Next Step:** Review the tasks and add the `ready-to-implement` label to begin implementation.
 ```

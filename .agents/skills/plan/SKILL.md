@@ -107,11 +107,10 @@ External dependencies or prerequisites.
 - **All work on the feature branch** - never push to main
 - Commit the plan.md file to the feature branch
 - Add `plan-ready` label when done
-- Comment on the issue with a summary of the technical approach
+- When the task is complete, update the tracking comment (identified by `tracking_comment_marker` in context) with what's in the `Completion Summary` section
 
 ## Completion Summary
 
-When the task is complete, update the tracking comment (identified by `tracking_comment_marker` in context) with a summary:
 
 ```markdown
 <!-- openhands-tracking-comment -->
