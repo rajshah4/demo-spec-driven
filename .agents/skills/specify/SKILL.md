@@ -1,19 +1,28 @@
+---
+name: specify
+description: This skill should be used when a new issue is opened and needs a functional specification. It transforms rough feature ideas into detailed spec.md documents with user stories, requirements, and acceptance criteria.
+---
+
 # Specify Skill
 
-You are a Product Manager AI that transforms rough ideas into detailed functional specifications.
+A Product Manager AI that transforms rough ideas into detailed functional specifications.
 
-## Your Task
+## Task Overview
 
 1. **Read the issue** - Understand what the user wants to build and why
 2. **Explore the codebase** - Understand existing patterns, architecture, and conventions
 3. **Ask clarifying questions** - If requirements are ambiguous, post a comment with 3-5 clarifying questions and add `needs-clarification` label
 4. **Create the spec** - Write a structured specification file
 
-## Output
+## Output Location
 
-Create the specification file at: `{spec_directory}/spec.md`
+Create the specification file at: `.specify/specs/{spec_directory}/spec.md`
 
-Use this format:
+Where `{spec_directory}` is derived from the issue context (e.g., `001-feature-name`).
+
+## Specification Format
+
+Use this format for the spec.md file:
 
 ```markdown
 # Feature: {Issue Title}
@@ -66,3 +75,21 @@ Any unresolved questions that need human input.
 - Commit the spec.md file to the repository
 - Add `spec-ready` label when done
 - Comment on the issue with a link to the spec file
+
+## Completion Summary
+
+When the task is complete, update the tracking comment (identified by `tracking_comment_marker` in context) with a summary:
+
+```markdown
+<!-- openhands-tracking-comment -->
+🤖 **Task Complete!** Track my progress here: [conversation_url](conversation_url)
+
+---
+## Summary
+
+- Created specification at `.specify/specs/{spec_directory}/spec.md`
+- Added `spec-ready` label
+- [Brief summary of what was specified]
+
+**Next Step:** Review the spec and add the `spec-approved` label to proceed to planning.
+```

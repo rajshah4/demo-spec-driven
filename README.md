@@ -38,41 +38,65 @@ A GitHub-native workflow for automating the journey from idea to merged PR using
    - Agent implements code → creates draft PR
    - Review PR → Agent responds to feedback
 
+## ✨ Features
+
+### Tracking Comments
+
+When a label triggers a workflow step, the agent automatically posts a tracking comment:
+
+> 🤖 **I'm on it!** Track my progress here: [conversation link]
+
+Once the task is complete, the same comment is updated with a summary of what was accomplished and the next steps.
+
 ## 📁 Project Structure
 
 ```
+.agents/
+└── skills/                     # Agent skills (OpenHands Skills format)
+    ├── specify/SKILL.md        # Step 1: Create specification
+    ├── plan/SKILL.md           # Step 2: Technical planning
+    ├── tasks/SKILL.md          # Step 3: Task breakdown
+    ├── implement/SKILL.md      # Step 4: Code generation
+    └── pr-responder/SKILL.md   # Step 5: PR review response
+
 .github/
 ├── workflows/
-│   └── openhands-agent.yml    # GitHub Actions workflow
+│   └── openhands-agent.yml     # GitHub Actions workflow
 └── openhands/
-    ├── runner.py               # Event routing script
-    └── skills/                 # Agent skill prompts
-        ├── specify.md          # Step 1: Create specification
-        ├── plan.md             # Step 2: Technical planning
-        ├── tasks.md            # Step 3: Task breakdown
-        ├── implement.md        # Step 4: Code generation
-        └── pr-responder.md     # Step 5: PR review response
+    └── runner.py               # Event routing script
 
 .specify/
-└── memory/
-    └── constitution.md         # Project principles
-
-specs/                          # Generated specifications
-└── <issue-number>-<feature>/
-    ├── spec.md
-    ├── plan.md
-    └── tasks.md
+├── memory/
+│   └── constitution.md         # Project principles
+└── specs/                      # Generated specifications
+    └── <issue-number>-<feature>/
+        ├── spec.md
+        ├── plan.md
+        └── tasks.md
 ```
 
 ## 🔄 Workflow Steps
 
 | Step | Trigger | Skill | Output |
 |------|---------|-------|--------|
-| 1. Specify | Issue opened | `specify` | `specs/<id>/spec.md` |
-| 2. Plan | `spec-approved` label | `plan` | `specs/<id>/plan.md` |
-| 3. Tasks | `plan-approved` label | `tasks` | `specs/<id>/tasks.md` |
+| 1. Specify | Issue opened | `specify` | `.specify/specs/<id>/spec.md` |
+| 2. Plan | `spec-approved` label | `plan` | `.specify/specs/<id>/plan.md` |
+| 3. Tasks | `plan-approved` label | `tasks` | `.specify/specs/<id>/tasks.md` |
 | 4. Implement | `ready-to-implement` label | `implement` | Draft PR |
 | 5. Refine | PR review submitted | `pr-responder` | Updated PR |
+
+## 🛠️ Customization
+
+### Skills
+
+Skills are stored in `.agents/skills/` using the [OpenHands Agent Skills format](https://docs.openhands.dev/overview/skills). Each skill is a directory containing:
+
+- `SKILL.md` - Main skill file with YAML frontmatter and instructions
+- Optional: `references/`, `scripts/`, `assets/` directories
+
+### Constitution
+
+The project constitution at `.specify/memory/constitution.md` defines non-negotiable principles that all agents must follow.
 
 ## 📖 Learn More
 

@@ -4,9 +4,10 @@ OpenHands Agent Runner - Routes GitHub events to appropriate skills.
 
 This script:
 1. Parses the GitHub event to determine which skill to invoke
-2. Constructs a self-contained prompt with full context
-3. Creates an OpenHands Cloud conversation to execute the skill
-4. Reports status back to the GitHub issue/PR
+2. Creates a tracking comment on the issue with conversation URL
+3. Constructs a self-contained prompt with full context
+4. Creates an OpenHands Cloud conversation to execute the skill
+5. The agent will update the tracking comment with a summary when done
 """
 
 import json
@@ -20,8 +21,11 @@ import httpx
 # CONFIGURATION
 # ============================================================================
 
-SKILLS_DIR = Path(__file__).parent / "skills"
+# Skills are stored in .agents/skills/ directory (Agent Skills format)
+REPO_ROOT = Path(__file__).parent.parent.parent
+SKILLS_DIR = REPO_ROOT / ".agents" / "skills"
 OPENHANDS_API_URL = "https://app.all-hands.dev/api/v1"
+GITHUB_API_URL = "https://api.github.com"
 
 # Routing rules: (event_name, action, label, skill_name)
 # label=None means "no specific label required"
@@ -47,6 +51,40 @@ ROUTING_RULES = [
 # ============================================================================
 # OPENHANDS CLOUD CLIENT
 # ============================================================================
+
+class GitHubClient:
+    """Minimal client for GitHub API operations."""
+    
+    def __init__(self, token: str):
+        self.token = token
+        self.headers = {
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github.v3+json",
+            "Content-Type": "application/json",
+        }
+    
+    def create_issue_comment(self, repo: str, issue_number: int, body: str) -> dict:
+        """Create a comment on an issue."""
+        resp = httpx.post(
+            f"{GITHUB_API_URL}/repos/{repo}/issues/{issue_number}/comments",
+            headers=self.headers,
+            json={"body": body},
+            timeout=30,
+        )
+        resp.raise_for_status()
+        return resp.json()
+    
+    def update_issue_comment(self, repo: str, comment_id: int, body: str) -> dict:
+        """Update an existing comment."""
+        resp = httpx.patch(
+            f"{GITHUB_API_URL}/repos/{repo}/issues/comments/{comment_id}",
+            headers=self.headers,
+            json={"body": body},
+            timeout=30,
+        )
+        resp.raise_for_status()
+        return resp.json()
+
 
 class OpenHandsCloudWorkspace:
     """Minimal client for creating OpenHands Cloud conversations."""
@@ -96,8 +134,8 @@ class OpenHandsCloudWorkspace:
 # ============================================================================
 
 def load_skill(skill_name: str) -> str:
-    """Load skill prompt from markdown file."""
-    skill_path = SKILLS_DIR / f"{skill_name}.md"
+    """Load skill prompt from SKILL.md file (Agent Skills format)."""
+    skill_path = SKILLS_DIR / skill_name / "SKILL.md"
     if not skill_path.exists():
         raise FileNotFoundError(f"Skill not found: {skill_path}")
     return skill_path.read_text()
@@ -117,7 +155,7 @@ def get_spec_directory(issue_number: int, issue_title: str) -> str:
     slug = issue_title.lower()
     slug = "".join(c if c.isalnum() or c == " " else "" for c in slug)
     slug = "-".join(slug.split())[:50]
-    return f"specs/{issue_number:03d}-{slug}"
+    return f".specify/specs/{issue_number:03d}-{slug}"
 
 
 # ============================================================================
@@ -220,6 +258,24 @@ def build_prompt(skill_content: str, context: dict, constitution: str | None) ->
 
 
 # ============================================================================
+# TRACKING COMMENT
+# ============================================================================
+
+TRACKING_COMMENT_MARKER = "<!-- openhands-tracking-comment -->"
+
+
+def create_tracking_comment(github: GitHubClient, repo: str, issue_number: int, conversation_url: str) -> dict:
+    """Create a tracking comment on the issue with the conversation URL."""
+    body = f"""{TRACKING_COMMENT_MARKER}
+🤖 **I'm on it!** Track my progress here: [{conversation_url}]({conversation_url})
+
+---
+_This comment will be updated with a summary once the task is complete._
+"""
+    return github.create_issue_comment(repo, issue_number, body)
+
+
+# ============================================================================
 # MAIN
 # ============================================================================
 
@@ -229,6 +285,10 @@ def main():
     if not api_key:
         print("ERROR: OPENHANDS_API_KEY not set")
         sys.exit(1)
+    
+    github_token = os.environ.get("GITHUB_TOKEN")
+    if not github_token:
+        print("WARNING: GITHUB_TOKEN not set, tracking comments disabled")
     
     event_name = os.environ.get("EVENT_NAME", "")
     event_action = os.environ.get("EVENT_ACTION", "")
@@ -253,36 +313,59 @@ def main():
     skill_content = load_skill(skill_name)
     constitution = load_constitution()
     
-    # Build prompt
-    prompt = build_prompt(skill_content, context, constitution)
-    
     # Determine branch (use feature branch if available)
     branch = "main"
     if context.get("spec_directory"):
         # For spec-driven work, we might want to use a feature branch
         branch = f"feature/{context['number']}-{context['title'][:30].lower().replace(' ', '-')}"
     
+    # Check if this is a label-triggered event (needs tracking comment)
+    is_label_triggered = event_action == "labeled" and event_label
+    issue_number = context.get("number")
+    repo = context.get("repository", "")
+    
+    # Add tracking comment marker to context so agent knows to update it
+    if is_label_triggered:
+        context["tracking_comment_marker"] = TRACKING_COMMENT_MARKER
+    
+    # Build prompt with full context
+    prompt = build_prompt(skill_content, context, constitution)
+    
     # Create OpenHands conversation
     workspace = OpenHandsCloudWorkspace(api_key)
     
     result = workspace.create_conversation(
         initial_message=prompt,
-        repository=context.get("repository", ""),
+        repository=repo,
         branch=branch if skill_name == "implement" else "main",
         title=f"[{skill_name}] #{context.get('number', '')} {context.get('title', context.get('pr_title', 'Task'))}",
     )
     
     conversation_id = result.get("app_conversation_id") or result.get("id")
-    url = workspace.get_conversation_url(conversation_id)
+    conversation_url = workspace.get_conversation_url(conversation_id)
     
-    print(f"OpenHands conversation started: {url}")
+    print(f"OpenHands conversation started: {conversation_url}")
+    
+    # Create tracking comment for label-triggered events on issues
+    tracking_comment_id = None
+    
+    if github_token and is_label_triggered and issue_number and repo:
+        try:
+            github = GitHubClient(github_token)
+            comment = create_tracking_comment(github, repo, issue_number, conversation_url)
+            tracking_comment_id = comment.get("id")
+            print(f"Created tracking comment: {tracking_comment_id}")
+        except Exception as e:
+            print(f"WARNING: Failed to create tracking comment: {e}")
     
     # Output for GitHub Actions
     github_output = os.environ.get("GITHUB_OUTPUT")
     if github_output:
         with open(github_output, "a") as f:
-            f.write(f"conversation_url={url}\n")
+            f.write(f"conversation_url={conversation_url}\n")
             f.write(f"skill={skill_name}\n")
+            if tracking_comment_id:
+                f.write(f"tracking_comment_id={tracking_comment_id}\n")
 
 
 if __name__ == "__main__":
