@@ -68,3 +68,4 @@ Use this format:
 - Include testing tasks
 - Commit the tasks.md file to the repository
 - Add `tasks-ready` label when done
+- Comment on the issue with a summary of the tasks and a link to the tasks file
