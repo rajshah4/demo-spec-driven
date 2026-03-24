@@ -67,6 +67,12 @@ When the implementation step is complete, post a new issue comment that includes
 - Confirmation that `implementation-complete` was added
 - Any notable follow-up items or reviewer callouts
 
+**File Links:** All file paths referenced in the comment must be hyperlinks to their location in the branch using this format:
+`https://github.com/{repository}/blob/{feature_branch}/{file_path}`
+
+For example, if `repository` is `acme/demo` and `feature_branch` is `feature/42-add-login`, then a file like `src/auth/login.ts` should link to:
+`https://github.com/acme/demo/blob/feature/42-add-login/src/auth/login.ts`
+
 Example format:
 
 ```markdown
@@ -74,6 +80,7 @@ Example format:
 
 - Working on branch: `{feature_branch}`
 - **Implementation summary:** [Brief summary]
+- **Files changed:** [List key files as hyperlinks, e.g., [`src/auth/login.ts`](https://github.com/{repository}/blob/{feature_branch}/src/auth/login.ts)]
 - **Tests:** [List tests and outcomes]
 - **Draft PR:** [Link]
 - Added `implementation-complete` label

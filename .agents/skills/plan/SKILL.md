@@ -114,11 +114,17 @@ External dependencies or prerequisites.
 When the plan step is complete, post a new issue comment that includes:
 
 - The branch you worked on: `{feature_branch}`
-- The path to `{spec_directory}/plan.md`
+- The path to `{spec_directory}/plan.md` as a hyperlink
 - Confirmation that `plan-ready` was added
 - A brief summary of the technical approach
 - The key components or files affected
 - The next step for the user (`plan-approved`)
+
+**File Links:** All file paths referenced in the comment must be hyperlinks to their location in the branch using this format:
+`https://github.com/{repository}/blob/{feature_branch}/{file_path}`
+
+For example, if `repository` is `acme/demo` and `feature_branch` is `feature/42-add-login`, then `{spec_directory}/plan.md` should link to:
+`https://github.com/acme/demo/blob/feature/42-add-login/.specify/specs/042-add-login/plan.md`
 
 Example format:
 
@@ -126,7 +132,7 @@ Example format:
 ## 🧾 Plan Step Complete
 
 - Working on branch: `{feature_branch}`
-- Created implementation plan at `{spec_directory}/plan.md`
+- Created implementation plan at [`{spec_directory}/plan.md`](https://github.com/{repository}/blob/{feature_branch}/{spec_directory}/plan.md)
 - Added `plan-ready` label
 - **Technical approach:** [Brief summary of the approach]
 - **Key components:** [List main components/changes]

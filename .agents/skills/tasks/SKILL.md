@@ -100,12 +100,18 @@ Use this format for the tasks.md file:
 When the task step is complete, post a new issue comment that includes:
 
 - The branch you worked on: `{feature_branch}`
-- The path to `{spec_directory}/tasks.md`
+- The path to `{spec_directory}/tasks.md` as a hyperlink
 - Confirmation that `tasks-ready` was added
 - The total task count and phase breakdown
 - A concise effort estimate
 - A bulleted summary of the planned work
 - The next step for the user (`ready-to-implement`)
+
+**File Links:** All file paths referenced in the comment must be hyperlinks to their location in the branch using this format:
+`https://github.com/{repository}/blob/{feature_branch}/{file_path}`
+
+For example, if `repository` is `acme/demo` and `feature_branch` is `feature/42-add-login`, then `{spec_directory}/tasks.md` should link to:
+`https://github.com/acme/demo/blob/feature/42-add-login/.specify/specs/042-add-login/tasks.md`
 
 Example format:
 
@@ -113,7 +119,7 @@ Example format:
 ## 🧾 Task Step Complete
 
 - Working on branch: `{feature_branch}`
-- Created task breakdown at `{spec_directory}/tasks.md`
+- Created task breakdown at [`{spec_directory}/tasks.md`](https://github.com/{repository}/blob/{feature_branch}/{spec_directory}/tasks.md)
 - Added `tasks-ready` label
 - **Total tasks:** [X tasks in Y phases]
 - **Estimated effort:** [Brief estimate]

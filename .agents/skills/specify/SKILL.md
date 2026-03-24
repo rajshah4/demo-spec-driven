@@ -106,7 +106,7 @@ Example comment format:
 ```markdown
 ## 📋 Initial Spec Created
 
-I've created an initial specification based on the issue description. You can find it here: [spec.md]({spec_directory}/spec.md)
+I've created an initial specification based on the issue description. You can find it here: [spec.md](https://github.com/{repository}/blob/{feature_branch}/{spec_directory}/spec.md)
 
 ## ❓ Clarifying Questions
 
@@ -127,11 +127,17 @@ If users provide responses in the conversation:
 When the spec step is complete, post a new issue comment with the details of the step. Include:
 
 - The feature branch you used
-- The path to `{spec_directory}/spec.md`
+- The path to `{spec_directory}/spec.md` as a hyperlink
 - Confirmation that `spec-ready` was added
 - A concise summary of the spec scope
 - The clarifying questions that still need answers, if any
 - The next step for the user (`spec-approved`)
+
+**File Links:** All file paths referenced in the comment must be hyperlinks to their location in the branch using this format:
+`https://github.com/{repository}/blob/{feature_branch}/{file_path}`
+
+For example, if `repository` is `acme/demo` and `feature_branch` is `feature/42-add-login`, then `{spec_directory}/spec.md` should link to:
+`https://github.com/acme/demo/blob/feature/42-add-login/.specify/specs/042-add-login/spec.md`
 
 Example format:
 
@@ -139,7 +145,7 @@ Example format:
 ## 🧾 Spec Step Complete
 
 - Created feature branch: `{feature_branch}`
-- Created specification at `{spec_directory}/spec.md`
+- Created specification at [`{spec_directory}/spec.md`](https://github.com/{repository}/blob/{feature_branch}/{spec_directory}/spec.md)
 - Added `spec-ready` label
 - **Scope summary:** [Brief summary]
 
