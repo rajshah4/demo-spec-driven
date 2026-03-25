@@ -14,3 +14,8 @@ build/
 *.egg
 .DS_Store
 Thumbs.db
+node_modules/
+data/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal

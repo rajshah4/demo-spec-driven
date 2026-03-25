@@ -12,3 +12,13 @@
 
 ## Verification
 - `python -m py_compile .github/openhands/runner.py`
+- `npm install`
+- `PORT=12000 npm start`
+- `curl http://127.0.0.1:12000/health`
+
+## Payroll app example
+- Express + SQLite payroll dashboard lives in `src/`.
+- Entry point: `src/server.js`.
+- Database module: `src/db.js`, storing local data in `data/payroll.sqlite`.
+- Renderer and styling: `src/render.js` and `src/public/styles.css`.
+- The database seeds 6 employee records on first run.
