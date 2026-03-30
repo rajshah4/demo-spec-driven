@@ -26,4 +26,6 @@
 - Renderer and styling: `src/render.js` and `src/public/styles.css`.
 - The database seeds 6 employee records on first run.
 - Manager `<select>` options in `src/render.js` are derived from the employee collection passed into `renderDashboard`, so filtered views need separate access to the full roster to avoid hiding valid manager choices.
-- The SQLite path is currently fixed inside `src/db.js`, so isolated automated tests may need that module to support a configurable test database path.
+- Dashboard filters now live in `src/dashboardFilters.js`; the helper normalizes `search`, `minSalary`, and `maxSalary`, preserves safe return-to state for CRUD redirects, and rejects non-dashboard redirect targets.
+- `src/db.js` supports a `PAYROLL_DB_PATH` environment override and exports `closeDatabase()` so integration tests can run against isolated SQLite files without touching `data/payroll.sqlite`.
+

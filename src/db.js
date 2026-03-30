@@ -2,10 +2,10 @@ const fs = require('fs');
 const path = require('path');
 const Database = require('better-sqlite3');
 
-const dataDirectory = path.join(__dirname, '..', 'data');
-const databasePath = path.join(dataDirectory, 'payroll.sqlite');
+const defaultDatabasePath = path.join(__dirname, '..', 'data', 'payroll.sqlite');
+const databasePath = process.env.PAYROLL_DB_PATH || defaultDatabasePath;
 
-fs.mkdirSync(dataDirectory, { recursive: true });
+fs.mkdirSync(path.dirname(databasePath), { recursive: true });
 
 const db = new Database(databasePath);
 
@@ -86,7 +86,7 @@ if (countEmployeesStatement.get().count === 0) {
   seed();
 }
 
-const listEmployeesStatement = db.prepare(`
+const baseEmployeeSelect = `
   SELECT
     employee.id,
     employee.name,
@@ -98,8 +98,7 @@ const listEmployeesStatement = db.prepare(`
     employee.updated_at AS updatedAt
   FROM employees AS employee
   LEFT JOIN employees AS manager ON manager.id = employee.manager_id
-  ORDER BY employee.name COLLATE NOCASE
-`);
+`;
 
 const summaryStatement = db.prepare(`
   SELECT
@@ -130,8 +129,40 @@ const getEmployeeStatement = db.prepare(`
   WHERE id = ?
 `);
 
-function listEmployees() {
-  return listEmployeesStatement.all();
+function escapeLikePattern(value) {
+  return value.replace(/([\\%_])/g, '\\$1');
+}
+
+function listEmployees(filters = {}) {
+  const conditions = [];
+  const params = {};
+
+  if (filters.search) {
+    conditions.push(`(
+      employee.name LIKE @search ESCAPE '\\' COLLATE NOCASE
+      OR employee.title LIKE @search ESCAPE '\\' COLLATE NOCASE
+    )`);
+    params.search = `%${escapeLikePattern(filters.search)}%`;
+  }
+
+  if (filters.minSalary !== null && filters.minSalary !== undefined) {
+    conditions.push('employee.salary >= @minSalary');
+    params.minSalary = filters.minSalary;
+  }
+
+  if (filters.maxSalary !== null && filters.maxSalary !== undefined) {
+    conditions.push('employee.salary <= @maxSalary');
+    params.maxSalary = filters.maxSalary;
+  }
+
+  const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+  const statement = db.prepare(`
+    ${baseEmployeeSelect}
+    ${whereClause}
+    ORDER BY employee.name COLLATE NOCASE
+  `);
+
+  return statement.all(params);
 }
 
 function getSummary() {
@@ -161,11 +192,17 @@ function deleteEmployee(id) {
   return employee;
 }
 
+function closeDatabase() {
+  db.close();
+}
+
 module.exports = {
-  listEmployees,
-  getSummary,
+  closeDatabase,
   createEmployee,
-  updateEmployee,
+  databasePath,
   deleteEmployee,
   employeeExists,
+  getSummary,
+  listEmployees,
+  updateEmployee,
 };
