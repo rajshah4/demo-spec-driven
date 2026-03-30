@@ -16,6 +16,9 @@
 - `PORT=12000 npm start`
 - `curl http://127.0.0.1:12000/health`
 
+## Workflow notes
+- The expected spec artifacts may be incomplete on long-running step chains; issue #1 reached the task step without a `plan.md` file in `.specify/specs/001-demo-add-employee-search-and-salary-range-filter/`, so verify the spec directory contents before assuming prior-step outputs exist.
+
 ## Payroll app example
 - Express + SQLite payroll dashboard lives in `src/`.
 - Entry point: `src/server.js`.
