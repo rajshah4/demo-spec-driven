@@ -9,7 +9,7 @@ function escapeHtml(value) {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/\"/g, '&quot;')
+    .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
 
@@ -28,6 +28,10 @@ function renderManagerOptions(employees, selectedManagerId = null, excludeId = n
   }
 
   return options.join('');
+}
+
+function renderReturnToInput(returnTo) {
+  return `<input type="hidden" name="returnTo" value="${escapeHtml(returnTo)}" />`;
 }
 
 function renderEmployeeRows(employees) {
@@ -51,7 +55,7 @@ function renderEmployeeRows(employees) {
     .join('');
 }
 
-function renderEmployeeCards(employees) {
+function renderEmployeeCards(employees, allEmployees, returnTo) {
   return employees
     .map(
       (employee) => `
@@ -67,6 +71,7 @@ function renderEmployeeCards(employees) {
             </div>
           </summary>
           <form method="post" action="/employees/${employee.id}/update" class="employee-form">
+            ${renderReturnToInput(returnTo)}
             <div class="form-grid">
               <label>
                 <span>Full name</span>
@@ -83,7 +88,7 @@ function renderEmployeeCards(employees) {
               <label>
                 <span>Manager</span>
                 <select name="managerId">
-                  ${renderManagerOptions(employees, employee.managerId, employee.id)}
+                  ${renderManagerOptions(allEmployees, employee.managerId, employee.id)}
                 </select>
               </label>
               <label class="full-width">
@@ -96,6 +101,7 @@ function renderEmployeeCards(employees) {
             </div>
           </form>
           <form method="post" action="/employees/${employee.id}/delete" class="delete-form">
+            ${renderReturnToInput(returnTo)}
             <button type="submit" class="button button-danger" onclick="return confirm('Remove ${escapeHtml(employee.name)} from payroll?');">
               Remove employee
             </button>
@@ -106,8 +112,131 @@ function renderEmployeeCards(employees) {
     .join('');
 }
 
-function renderDashboard({ employees, summary, message }) {
+function renderFilterSummary(filters, employees) {
+  const chips = [];
+
+  if (filters.applied.search) {
+    chips.push(`<li class="filter-chip"><span>Search</span><strong>${escapeHtml(filters.search)}</strong></li>`);
+  }
+
+  if (filters.applied.minSalary !== null) {
+    chips.push(`<li class="filter-chip"><span>Min salary</span><strong>${currencyFormatter.format(filters.applied.minSalary)}</strong></li>`);
+  }
+
+  if (filters.applied.maxSalary !== null) {
+    chips.push(`<li class="filter-chip"><span>Max salary</span><strong>${currencyFormatter.format(filters.applied.maxSalary)}</strong></li>`);
+  }
+
+  if (!chips.length && !filters.validationMessage) {
+    return '';
+  }
+
+  const resultCountLabel = employees.length === 1 ? '1 matching employee' : `${employees.length} matching employees`;
+
+  return `
+    <div class="filter-summary">
+      ${filters.validationMessage ? `<div class="validation-banner">${escapeHtml(filters.validationMessage)}</div>` : ''}
+      ${chips.length ? `
+        <div class="active-filters">
+          <div>
+            <p class="eyebrow">Active filters</p>
+            <p class="subtle filter-summary-copy">${resultCountLabel}</p>
+          </div>
+          <ul class="filter-chip-list">
+            ${chips.join('')}
+          </ul>
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+function renderFilterPanel(filters, employees) {
+  const clearAction = filters.hasSubmittedValues
+    ? '<a class="button button-secondary" href="/">Clear filters</a>'
+    : '';
+
+  return `
+    <section class="panel">
+      <div class="panel-heading panel-heading-tight">
+        <div>
+          <p class="eyebrow">Filters</p>
+          <h2>Refine the roster</h2>
+        </div>
+        <p class="subtle">Search by name or title and focus on a salary band for live demos.</p>
+      </div>
+      <form method="get" action="/" class="filter-form">
+        <div class="filter-grid">
+          <label>
+            <span>Search employees</span>
+            <input type="search" name="search" value="${escapeHtml(filters.search)}" placeholder="Search by name or title" />
+          </label>
+          <label>
+            <span>Minimum salary</span>
+            <input type="number" name="minSalary" min="0" step="1000" value="${escapeHtml(filters.minSalary)}" placeholder="90000" />
+          </label>
+          <label>
+            <span>Maximum salary</span>
+            <input type="number" name="maxSalary" min="0" step="1000" value="${escapeHtml(filters.maxSalary)}" placeholder="180000" />
+          </label>
+        </div>
+        <div class="filter-actions">
+          <button type="submit" class="button button-primary">Apply filters</button>
+          ${clearAction}
+        </div>
+      </form>
+      ${renderFilterSummary(filters, employees)}
+    </section>
+  `;
+}
+
+function renderRosterSection(employees, filters) {
+  if (!employees.length) {
+    return `
+      <div class="empty-state">
+        <h3>No employees match these filters.</h3>
+        <p>Try a broader search or clear the salary range to restore the full roster.</p>
+        ${filters.hasSubmittedValues ? '<a class="button button-secondary" href="/">Clear filters</a>' : ''}
+      </div>
+    `;
+  }
+
+  return `
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Title</th>
+            <th>Salary</th>
+            <th>Manager</th>
+            <th>Home address</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${renderEmployeeRows(employees)}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function renderEditorSection(employees) {
+  if (!employees.length) {
+    return `
+      <div class="empty-state empty-state-compact">
+        <h3>No matching employee records to edit.</h3>
+        <p>Update the filters above to continue managing payroll profiles.</p>
+      </div>
+    `;
+  }
+
+  return '';
+}
+
+function renderDashboard({ employees, allEmployees, summary, message, filters }) {
   const individualContributors = summary.headcount - summary.managerCount;
+  const visibleCountLabel = employees.length === 1 ? '1 employee shown' : `${employees.length} employees shown`;
 
   return `<!DOCTYPE html>
   <html lang="en">
@@ -164,7 +293,8 @@ function renderDashboard({ employees, summary, message }) {
                 <h2>New payroll profile</h2>
               </div>
             </div>
-            <form method="post" action="/employees" class="employee-form">
+            <form method="post" action="/employees" class="employee-form employee-form-sidebar">
+              ${renderReturnToInput(filters.returnTo)}
               <div class="form-grid single-column">
                 <label>
                   <span>Full name</span>
@@ -181,7 +311,7 @@ function renderDashboard({ employees, summary, message }) {
                 <label>
                   <span>Manager</span>
                   <select name="managerId">
-                    ${renderManagerOptions(employees)}
+                    ${renderManagerOptions(allEmployees)}
                   </select>
                 </label>
                 <label>
@@ -196,29 +326,16 @@ function renderDashboard({ employees, summary, message }) {
           </aside>
 
           <main class="dashboard-content">
+            ${renderFilterPanel(filters, employees)}
             <section class="panel">
               <div class="panel-heading">
                 <div>
                   <p class="eyebrow">Roster</p>
                   <h2>Employee directory</h2>
                 </div>
+                <p class="subtle">${visibleCountLabel}</p>
               </div>
-              <div class="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Title</th>
-                      <th>Salary</th>
-                      <th>Manager</th>
-                      <th>Home address</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${renderEmployeeRows(employees)}
-                  </tbody>
-                </table>
-              </div>
+              ${renderRosterSection(employees, filters)}
             </section>
 
             <section class="panel">
@@ -229,8 +346,9 @@ function renderDashboard({ employees, summary, message }) {
                 </div>
                 <p class="subtle">Expand a card to update salary, title, address, manager, or remove the employee from payroll.</p>
               </div>
+              ${renderEditorSection(employees)}
               <div class="cards-grid">
-                ${renderEmployeeCards(employees)}
+                ${renderEmployeeCards(employees, allEmployees, filters.returnTo)}
               </div>
             </section>
           </main>

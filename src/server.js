@@ -8,6 +8,11 @@ const {
   deleteEmployee,
   employeeExists,
 } = require('./db');
+const {
+  appendMessageToReturnTo,
+  parseDashboardFilters,
+  sanitizeReturnTo,
+} = require('./dashboardFilters');
 const { renderDashboard } = require('./render');
 
 const app = express();
@@ -16,8 +21,8 @@ const port = Number.parseInt(process.env.PORT || '3000', 10);
 app.use(express.urlencoded({ extended: false }));
 app.use('/static', express.static(path.join(__dirname, 'public')));
 
-function redirectWithMessage(res, message) {
-  res.redirect(`/?message=${encodeURIComponent(message)}`);
+function redirectWithMessage(res, message, returnTo = '/') {
+  res.redirect(appendMessageToReturnTo(returnTo, message));
 }
 
 function parseId(value) {
@@ -67,10 +72,12 @@ function parseEmployeeInput(body, employeeId = null) {
 
 app.get('/', (req, res) => {
   const message = typeof req.query.message === 'string' ? req.query.message : '';
-  const employees = listEmployees();
+  const filters = parseDashboardFilters(req.query);
+  const employees = listEmployees(filters.applied);
+  const allEmployees = listEmployees();
   const summary = getSummary();
 
-  res.type('html').send(renderDashboard({ employees, summary, message }));
+  res.type('html').send(renderDashboard({ employees, allEmployees, summary, message, filters }));
 });
 
 app.get('/health', (req, res) => {
@@ -81,47 +88,60 @@ app.get('/health', (req, res) => {
 });
 
 app.get('/api/employees', (req, res) => {
+  const filters = parseDashboardFilters(req.query);
+
   res.json({
-    employees: listEmployees(),
+    employees: listEmployees(filters.applied),
     summary: getSummary(),
+    filters: {
+      search: filters.search,
+      minSalary: filters.minSalary,
+      maxSalary: filters.maxSalary,
+      hasActiveFilters: filters.hasActiveFilters,
+      validationMessage: filters.validationMessage,
+    },
   });
 });
 
 app.post('/employees', (req, res) => {
+  const returnTo = sanitizeReturnTo(req.body.returnTo);
+
   try {
     const employee = parseEmployeeInput(req.body);
     createEmployee(employee);
-    redirectWithMessage(res, `${employee.name} added to payroll.`);
+    redirectWithMessage(res, `${employee.name} added to payroll.`, returnTo);
   } catch (error) {
-    redirectWithMessage(res, error.message || 'Unable to add employee.');
+    redirectWithMessage(res, error.message || 'Unable to add employee.', returnTo);
   }
 });
 
 app.post('/employees/:id/update', (req, res) => {
   const employeeId = parseId(req.params.id);
+  const returnTo = sanitizeReturnTo(req.body.returnTo);
 
   if (!employeeId || !employeeExists(employeeId)) {
-    return redirectWithMessage(res, 'Employee record could not be found.');
+    return redirectWithMessage(res, 'Employee record could not be found.', returnTo);
   }
 
   try {
     const employee = parseEmployeeInput(req.body, employeeId);
     updateEmployee(employeeId, employee);
-    return redirectWithMessage(res, `${employee.name}'s profile was updated.`);
+    return redirectWithMessage(res, `${employee.name}'s profile was updated.`, returnTo);
   } catch (error) {
-    return redirectWithMessage(res, error.message || 'Unable to update employee.');
+    return redirectWithMessage(res, error.message || 'Unable to update employee.', returnTo);
   }
 });
 
 app.post('/employees/:id/delete', (req, res) => {
   const employeeId = parseId(req.params.id);
+  const returnTo = sanitizeReturnTo(req.body.returnTo);
 
   if (!employeeId || !employeeExists(employeeId)) {
-    return redirectWithMessage(res, 'Employee record could not be found.');
+    return redirectWithMessage(res, 'Employee record could not be found.', returnTo);
   }
 
   const removedEmployee = deleteEmployee(employeeId);
-  return redirectWithMessage(res, `${removedEmployee.name} was removed from payroll.`);
+  return redirectWithMessage(res, `${removedEmployee.name} was removed from payroll.`, returnTo);
 });
 
 if (require.main === module) {
