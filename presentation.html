@@ -652,8 +652,45 @@
             </div>
         </section>
 
-        <!-- Slide 3: The 5 Steps -->
+        <!-- Slide 3: What is OpenSpec? -->
         <section class="slide" id="slide-3">
+            <div class="slide-content">
+                <h2>What is OpenSpec?</h2>
+                <p class="subtitle">A structured, machine-readable format that makes specs actionable — not just readable</p>
+                <div class="grid-2" style="margin-top: 40px;">
+                    <div>
+                        <div class="card" style="margin-bottom: 24px;">
+                            <h3>📐 Schema-Enforced</h3>
+                            <p style="font-size: 1rem;">Every <code>spec.json</code> is validated against a JSON Schema. Required fields — <code>user_stories</code>, <code>acceptance_criteria</code>, <code>requirements</code> — must be present before the workflow proceeds.</p>
+                        </div>
+                        <div class="card">
+                            <h3>🤖 AI-Ready</h3>
+                            <p style="font-size: 1rem;">Structured JSON means agents can parse intent reliably. No ambiguity — must-have requirements are separate from nice-to-haves, out-of-scope is explicit.</p>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 style="margin-bottom: 16px;">Why JSON, not Markdown?</h3>
+                        <pre style="font-size: 0.8rem; line-height: 1.8;">
+<span style="color: var(--text-muted);">// Validated automatically in CI</span>
+{
+  "version": "1.0",
+  "user_stories": [...],        <span style="color: var(--text-muted);">✓ required</span>
+  "requirements": {
+    "must_have": [...],         <span style="color: var(--text-muted);">✓ required</span>
+    "should_have": [...],
+    "nice_to_have": [...]
+  },
+  "acceptance_criteria": [...], <span style="color: var(--text-muted);">✓ required</span>
+  "out_of_scope": [...]         <span style="color: var(--text-muted);">✓ explicit</span>
+}</pre>
+                        <p style="font-size: 0.95rem; margin-top: 16px; color: var(--text-muted);">Schema lives at <code>.specify/schema/spec.schema.json</code> — versioned in your repo.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 4: The 5 Steps -->
+        <section class="slide" id="slide-4-workflow">
             <div class="slide-content">
                 <h2>The 5-Step Workflow</h2>
                 <p>Each step produces a reviewable artifact with human approval gates</p>
@@ -1102,8 +1139,8 @@
                     </table>
                 </div>
 
-                <a href="https://github.com/github/spec-kit" class="cta-button" target="_blank">
-                    Learn More About Spec-Driven Development →
+                <a href="https://github.com/rajshah4/demo-spec-driven" class="cta-button" target="_blank">
+                    Explore the Demo Repo →
                 </a>
             </div>
         </section>
