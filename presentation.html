@@ -704,7 +704,7 @@
                             <li>Agent reads your issue description</li>
                             <li>Explores the codebase for context</li>
                             <li>May ask clarifying questions</li>
-                            <li>Creates structured <code>spec.md</code></li>
+                            <li>Creates structured <code>spec.json</code></li>
                         </ul>
                         <div style="margin-top: 24px;">
                             <span class="label label-blue">spec-ready</span>
@@ -712,24 +712,24 @@
                         </div>
                     </div>
                     <div>
-                        <h3>Output: spec.md</h3>
+                        <h3>Output: spec.json</h3>
                         <pre style="font-size: 0.8rem;">
-# Feature: User Authentication
-
-## Problem Statement
-Users need secure access to their accounts...
-
-## User Stories
-1. As a user, I want to log in so that...
-
-## Functional Requirements
-### Must Have
-- [ ] Email/password login
-- [ ] Session management
-
-## Acceptance Criteria
-- [ ] Verify login with valid credentials
-- [ ] Verify error on invalid credentials</pre>
+{
+  "version": "1.0",
+  "feature": "User Authentication",
+  "problem_statement": "Users need secure access...",
+  "user_stories": [...],
+  "requirements": {
+    "must_have": [
+      "Email/password login",
+      "Session management"
+    ]
+  },
+  "acceptance_criteria": [
+    "Login succeeds with valid credentials",
+    "Error returned on invalid credentials"
+  ]
+}</pre>
                     </div>
                 </div>
             </div>
@@ -1016,17 +1016,19 @@ Users need secure access to their accounts...
 ├── <span style="color: var(--accent-blue);">workflows/</span>
 │   └── openhands-agent.yml    <span style="color: var(--text-muted);"># Workflow triggers</span>
 └── <span style="color: var(--accent-blue);">openhands/</span>
-    ├── runner.py               <span style="color: var(--text-muted);"># Event routing</span>
-    └── <span style="color: var(--accent-purple);">skills/</span>
-        ├── specify.md          <span style="color: var(--text-muted);"># Step 1</span>
-        ├── plan.md             <span style="color: var(--text-muted);"># Step 2</span>
-        ├── tasks.md            <span style="color: var(--text-muted);"># Step 3</span>
-        ├── implement.md        <span style="color: var(--text-muted);"># Step 4</span>
-        └── pr-responder.md     <span style="color: var(--text-muted);"># Step 5</span>
+    └── runner.py               <span style="color: var(--text-muted);"># Event routing</span>
 
-<span style="color: var(--accent-green);">specs/</span>                          <span style="color: var(--text-muted);"># Generated specs</span>
+<span style="color: var(--accent-cyan);">.agents/</span>
+└── <span style="color: var(--accent-purple);">skills/</span>
+    ├── specify/SKILL.md        <span style="color: var(--text-muted);"># Step 1</span>
+    ├── plan/SKILL.md           <span style="color: var(--text-muted);"># Step 2</span>
+    ├── tasks/SKILL.md          <span style="color: var(--text-muted);"># Step 3</span>
+    ├── implement/SKILL.md      <span style="color: var(--text-muted);"># Step 4</span>
+    └── pr-responder/SKILL.md   <span style="color: var(--text-muted);"># Step 5</span>
+
+<span style="color: var(--accent-green);">.specify/specs/</span>                 <span style="color: var(--text-muted);"># Generated specs</span>
 └── 042-user-auth/
-    ├── spec.md
+    ├── spec.json
     ├── plan.md
     └── tasks.md</pre>
                     </div>
@@ -1070,7 +1072,7 @@ Users need secure access to their accounts...
                                 <td>1. Specify</td>
                                 <td>Issue opened</td>
                                 <td><code>specify</code></td>
-                                <td>spec.md</td>
+                                <td>spec.json</td>
                             </tr>
                             <tr>
                                 <td>2. Plan</td>
