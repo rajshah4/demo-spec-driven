@@ -13,6 +13,7 @@ This script:
 import json
 import os
 import sys
+import time
 from pathlib import Path
 
 import httpx
@@ -92,7 +93,12 @@ class OpenHandsCloudWorkspace:
         branch: str = "main",
         title: str | None = None,
     ) -> dict:
-        """Start a new OpenHands Cloud conversation."""
+        """Start a new OpenHands Cloud conversation.
+
+        POST /api/v1/app-conversations is asynchronous and returns a start-task
+        object whose `id` is the start_task_id, not the conversation ID.
+        We poll the start-task until `app_conversation_id` is populated.
+        """
         payload = {
             "initial_message": {
                 "role": "user",
@@ -104,7 +110,7 @@ class OpenHandsCloudWorkspace:
         }
         if title:
             payload["title"] = title
-        
+
         resp = httpx.post(
             f"{OPENHANDS_API_URL}/app-conversations",
             headers=self.headers,
@@ -112,8 +118,28 @@ class OpenHandsCloudWorkspace:
             timeout=120,
         )
         resp.raise_for_status()
-        return resp.json()
-    
+        result = resp.json()
+
+        # If app_conversation_id isn't in the initial response, poll the start-task
+        if not result.get("app_conversation_id"):
+            start_task_id = result["id"]
+            print(f"Conversation creation is async (start_task_id={start_task_id}), polling for app_conversation_id...")
+            for attempt in range(60):  # poll up to 60s
+                time.sleep(1)
+                poll = httpx.get(
+                    f"{OPENHANDS_API_URL}/app-conversations/start-tasks?ids={start_task_id}",
+                    headers=self.headers,
+                    timeout=30,
+                )
+                poll.raise_for_status()
+                items = poll.json().get("items", [])
+                if items and items[0].get("app_conversation_id"):
+                    print(f"Got app_conversation_id after {attempt + 1}s")
+                    return items[0]
+            raise RuntimeError(f"Timed out waiting for app_conversation_id (start_task_id={start_task_id})")
+
+        return result
+
     def get_conversation_url(self, conversation_id: str) -> str:
         return f"https://app.all-hands.dev/conversations/{conversation_id}"
 
