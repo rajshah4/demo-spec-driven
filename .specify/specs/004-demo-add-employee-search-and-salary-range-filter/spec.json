@@ -1,0 +1,82 @@
+{
+  "version": "1.0",
+  "feature": "Demo: Add employee search and salary range filter",
+  "issue": {
+    "number": 4,
+    "title": "Demo: Add employee search and salary range filter",
+    "url": "https://github.com/rajshah4/demo-spec-driven/issues/4"
+  },
+  "problem_statement": "The payroll dashboard currently displays all employees without any way to search or filter the list. When managing a growing roster, users need to quickly locate employees by name or job title and narrow the view to a specific salary range. Adding search and salary range filters to the existing dashboard will make the tool more practical and also demonstrate the end-to-end OpenHands + OpenSpec spec-driven workflow for a real, self-contained feature.",
+  "user_stories": [
+    {
+      "as_a": "payroll administrator or HR manager",
+      "i_want": "to search employees by name or job title on the payroll dashboard",
+      "so_that": "I can quickly find a specific person or role without scrolling through the entire roster"
+    },
+    {
+      "as_a": "payroll administrator or HR manager",
+      "i_want": "to filter employees by a minimum and maximum salary range",
+      "so_that": "I can focus on compensation bands relevant to a review or budget exercise"
+    },
+    {
+      "as_a": "payroll administrator or HR manager",
+      "i_want": "to see which filters are currently active and clear them with a single action",
+      "so_that": "I always know the view is filtered and can easily return to the full roster"
+    },
+    {
+      "as_a": "demo observer",
+      "i_want": "to see the full spec → plan → tasks → PR workflow applied to a real payroll feature",
+      "so_that": "I can evaluate whether the OpenSpec spec-driven process works end-to-end"
+    }
+  ],
+  "requirements": {
+    "must_have": [
+      "A text search input on the main dashboard that filters the employee list by name or job title",
+      "A minimum salary input and a maximum salary input that filter the employee list to the specified range",
+      "The employee roster table and edit cards must both reflect the active filter results",
+      "Active filters must be visually indicated (e.g., displayed as filter tags or labels above the list)",
+      "A clear/reset button that removes all active filters and returns to the full employee list",
+      "Filtering must not break any existing CRUD operations (add, update, delete employees)",
+      "The feature must work with the existing server-side rendering pattern (no framework swap required)"
+    ],
+    "should_have": [
+      "Filter state is preserved via query parameters so the filtered URL can be bookmarked or shared",
+      "The summary stats section (headcount, total payroll, average salary) updates to reflect filtered results when filters are active",
+      "An empty-state message is shown when no employees match the active filters",
+      "Salary range inputs accept only non-negative integers consistent with the existing salary validation"
+    ],
+    "nice_to_have": [
+      "Client-side live filtering without a full page reload for faster interactivity",
+      "A combined salary slider component in addition to the min/max text inputs",
+      "Highlight matching text within name or title for search results"
+    ]
+  },
+  "acceptance_criteria": [
+    "Entering a partial name or job title in the search input shows only employees whose name or title contains the query (case-insensitive)",
+    "Setting a minimum salary hides all employees with a salary below that value",
+    "Setting a maximum salary hides all employees with a salary above that value",
+    "Setting both min and max salary shows only employees within that inclusive range",
+    "Active filter values are displayed in the UI so users can see what filters are applied",
+    "Clicking the clear/reset button removes all filters and restores the full employee list",
+    "After adding, updating, or deleting an employee, any previously active filters are preserved",
+    "When no employees match the active filters, an appropriate empty-state message is shown instead of an empty table",
+    "Filtering by salary range does not allow a min value greater than the max value without surfacing an error or correcting the inputs",
+    "The spec.json artifact exists and passes OpenSpec schema validation (npm run validate:openspec)"
+  ],
+  "out_of_scope": [
+    "Authentication or role-based access control",
+    "Saving or persisting filter presets across sessions",
+    "Advanced search operators (boolean logic, wildcards, exact phrase matching)",
+    "Filtering by fields other than name, title, and salary (e.g., manager, address)",
+    "Pagination of filtered results",
+    "Export of filtered results to CSV or other formats",
+    "Changes to any existing CRUD routes or database schema",
+    "Mobile-optimized or fully accessible design beyond basic semantic HTML"
+  ],
+  "open_questions": [
+    "Should filtering be implemented server-side (query params on GET /) or client-side (JavaScript in the browser)? Server-side is consistent with the existing pattern and allows shareable URLs; client-side would be faster but adds JavaScript complexity.",
+    "Should the summary stats section (headcount, payroll totals, averages) reflect filtered results or always show the full roster totals? Reflecting filtered results is more useful but adds rendering complexity.",
+    "Should the salary range filter use a dedicated /filter or /search route, or should it use query parameters on the existing GET / route? Query parameters on GET / are simpler and consistent with the existing message query param pattern.",
+    "Should an invalid salary range (min > max) silently swap the values, show a validation error, or simply return no results?"
+  ]
+}
