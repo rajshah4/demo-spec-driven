@@ -1,0 +1,79 @@
+{
+  "version": "1.0",
+  "feature": "Add salary and search filters",
+  "issue": {
+    "number": 6,
+    "title": "Add salary and search filters",
+    "url": "https://github.com/rajshah4/demo-spec-driven/issues/6"
+  },
+  "problem_statement": "The payroll dashboard currently displays all employees with no way to narrow down the list. Administrators working with growing rosters need to quickly locate employees by name or job title, and to view only those within a given salary band. Adding search and salary range filters to the main dashboard—while leaving all existing CRUD workflows intact—delivers that utility and also demonstrates the complete spec → plan → tasks → PR workflow end-to-end.",
+  "user_stories": [
+    {
+      "as_a": "payroll administrator",
+      "i_want": "to search the employee roster by name or job title",
+      "so_that": "I can quickly locate a specific person or role without scrolling through the entire list"
+    },
+    {
+      "as_a": "payroll administrator",
+      "i_want": "to filter employees by a minimum and maximum salary",
+      "so_that": "I can review only the employees whose compensation falls within a target range"
+    },
+    {
+      "as_a": "payroll administrator",
+      "i_want": "to see which filters are currently active and clear them with a single action",
+      "so_that": "I always know what subset of data I am viewing and can return to the full list easily"
+    },
+    {
+      "as_a": "demo observer",
+      "i_want": "to watch the full spec-driven workflow (spec → plan → tasks → PR) on a real, self-contained feature",
+      "so_that": "I can evaluate whether the OpenSpec process works end-to-end in GitHub Actions"
+    }
+  ],
+  "requirements": {
+    "must_have": [
+      "A text search input on the main dashboard that filters the employee list by name or title (case-insensitive, partial match)",
+      "A minimum salary input and a maximum salary input that together filter the displayed employee list",
+      "Filters applied via URL query parameters so the filtered view is bookmarkable and shareable",
+      "An active-filters indicator that makes it visually clear when any filter is in effect",
+      "A 'Clear filters' link or button that navigates to the unfiltered dashboard (GET / with no filter params)",
+      "An empty-state message (e.g., 'No employees match your filters') shown when no employees pass the active filters",
+      "All existing CRUD endpoints (POST /employees, POST /employees/:id/update, POST /employees/:id/delete) continue to work correctly and without modification"
+    ],
+    "should_have": [
+      "Filter inputs on the dashboard are pre-populated from the current URL query parameters on page load",
+      "The summary stats section (headcount, total payroll, average salary, individual contributors) reflects the full roster regardless of active filters",
+      "Consistent redirect-with-message behavior after CRUD operations, navigating back to the unfiltered dashboard"
+    ],
+    "nice_to_have": [
+      "Client-side live filtering that updates the list as the user types, without a full page reload",
+      "Debounced search input to reduce unnecessary requests when live filtering is implemented",
+      "Salary range slider as an alternative to manual min/max text inputs"
+    ]
+  },
+  "acceptance_criteria": [
+    "GET /?search=<term> returns a 200 HTML response showing only employees whose name or title contains the search term (case-insensitive)",
+    "GET /?minSalary=<n>&maxSalary=<m> returns a 200 HTML response showing only employees whose salary is between n and m (inclusive)",
+    "GET /?search=<term>&minSalary=<n>&maxSalary=<m> applies both filters simultaneously",
+    "When any filter is active, a visible indicator (e.g., a highlighted filter bar or badge) is present on the page",
+    "The 'Clear filters' control navigates to GET / with no query parameters, displaying all employees",
+    "When no employees match the active filters, a meaningful empty-state message is shown instead of an empty table",
+    "Filter inputs are pre-populated with the current query parameter values on page load",
+    "POST /employees, POST /employees/:id/update, and POST /employees/:id/delete continue to function correctly and are unaffected by filter logic",
+    "The spec.json artifact passes OpenSpec schema validation (npm run validate:openspec)"
+  ],
+  "out_of_scope": [
+    "Sorting the employee list by any column",
+    "Pagination of the employee list",
+    "Persisting filter preferences across browser sessions (localStorage, cookies, or server-side)",
+    "Applying filters to the /api/employees JSON endpoint",
+    "Filtering on the potential future /skills page or any other route beyond the main dashboard",
+    "Authentication or role-based access control",
+    "Mobile-optimized or accessibility-hardened design beyond standard HTML semantics"
+  ],
+  "open_questions": [
+    "Should filtering be implemented server-side (query params processed in the GET / handler and passed to a filtered DB query) or client-side (JavaScript filtering the already-rendered DOM)? Server-side is more consistent with existing patterns; client-side avoids a page reload.",
+    "After a CRUD redirect (add/update/delete), should the previous filter state be preserved in the redirect URL, or should the dashboard always return to the unfiltered view?",
+    "Should the search input match against name OR title independently (either field can match), or must both fields contain the term?",
+    "Should min/max salary inputs reject non-numeric values with a validation error, or silently ignore them?"
+  ]
+}
