@@ -127,38 +127,35 @@ class OpenHandsCloudWorkspace:
         if result.get("app_conversation_id"):
             return result
 
-        # The API returned a start-task object. Poll until the real
-        # app_conversation_id is available via three strategies:
-        #   1. GET /app-conversations/start-tasks?ids=  (purpose-built)
-        #   2. GET /app-conversations?ids=              (fetch by id, may resolve)
-        #   3. GET /app-conversations/search?limit=1    (most-recent fallback)
+        # The API returned a start-task object (async creation).
+        # Poll GET /app-conversations/start-tasks?ids= until status == READY.
+        # Per official docs: 5-second intervals, up to 60 attempts (5 minutes).
         start_task_id = result["id"]
-        print(f"Async creation (start_task_id={start_task_id}), polling...")
+        print(f"Async creation (start_task_id={start_task_id}), polling for READY status...")
 
-        for attempt in range(30):  # poll up to 30s
-            time.sleep(1)
+        for attempt in range(60):
+            time.sleep(5)
+            try:
+                r = httpx.get(
+                    f"{OPENHANDS_API_URL}/app-conversations/start-tasks",
+                    headers=self.headers,
+                    params={"ids": start_task_id},
+                    timeout=30,
+                )
+                print(f"  poll attempt {attempt+1}: status={r.status_code} body={r.text[:400]}")
+                r.raise_for_status()
+                tasks = r.json()
+                if tasks and tasks[0].get("status") == "READY":
+                    conversation_id = tasks[0].get("app_conversation_id")
+                    print(f"  Conversation READY after {(attempt+1)*5}s: {conversation_id}")
+                    return tasks[0]
+                elif tasks and tasks[0].get("status") == "ERROR":
+                    print(f"  Start task ERROR: {tasks[0].get('error', 'unknown')}")
+                    break
+            except Exception as e:
+                print(f"  poll attempt {attempt+1} error: {e}")
 
-            for label, url in [
-                ("start-tasks", f"{OPENHANDS_API_URL}/app-conversations/start-tasks?ids={start_task_id}"),
-                ("fetch-by-id", f"{OPENHANDS_API_URL}/app-conversations?ids={start_task_id}"),
-                ("search",      f"{OPENHANDS_API_URL}/app-conversations/search?limit=1"),
-            ]:
-                try:
-                    r = httpx.get(url, headers=self.headers, timeout=10)
-                    print(f"  [{label}] attempt {attempt+1}: status={r.status_code} body={r.text[:300]}")
-                    if r.status_code == 200:
-                        data = r.json()
-                        items = data if isinstance(data, list) else data.get("items", [])
-                        if not isinstance(items, list):
-                            items = [items]
-                        for item in items:
-                            if item.get("app_conversation_id"):
-                                print(f"  Resolved via [{label}] after {attempt+1}s: {item['app_conversation_id']}")
-                                return item
-                except Exception as e:
-                    print(f"  [{label}] attempt {attempt+1} error: {e}")
-
-        print("WARNING: Could not resolve app_conversation_id after 30s; falling back to start_task_id")
+        print("WARNING: Could not resolve app_conversation_id; falling back to start_task_id")
         return result
 
     def get_conversation_url(self, conversation_id: str) -> str:
