@@ -1,0 +1,85 @@
+{
+  "version": "1.0",
+  "feature": "Add search and salary filters",
+  "issue": {
+    "number": 5,
+    "title": "Add search and salary filters",
+    "url": "https://github.com/rajshah4/demo-spec-driven/issues/5"
+  },
+  "problem_statement": "The payroll dashboard currently displays all employees in a flat, unfiltered list. When the employee count grows, or when a user wants to quickly locate a specific person or identify employees in a salary band, there is no way to narrow down the results without manually scanning the entire roster. Adding search and salary-range filters to the existing dashboard will make the employee directory more useful while demonstrating a full spec-driven OpenHands + OpenSpec feature workflow.",
+  "user_stories": [
+    {
+      "as_a": "payroll administrator",
+      "i_want": "to search employees by name or job title",
+      "so_that": "I can quickly locate a specific person or role in the roster"
+    },
+    {
+      "as_a": "payroll administrator",
+      "i_want": "to filter employees by a minimum and maximum salary range",
+      "so_that": "I can identify everyone who falls within a particular compensation band"
+    },
+    {
+      "as_a": "payroll administrator",
+      "i_want": "to see which filters are currently active and clear them in one click",
+      "so_that": "I can easily reset the view to the full employee list without refreshing the page"
+    },
+    {
+      "as_a": "demo observer",
+      "i_want": "to see search and filter controls added to the existing payroll dashboard without breaking CRUD operations",
+      "so_that": "I can evaluate how OpenSpec-driven development incrementally extends a working application"
+    }
+  ],
+  "requirements": {
+    "must_have": [
+      "A text search input on the dashboard that filters the employee roster by name or job title (case-insensitive, partial match)",
+      "A minimum salary input that hides employees earning below the specified amount",
+      "A maximum salary input that hides employees earning above the specified amount",
+      "Active filter state is reflected in the UI so the user knows filtering is in effect",
+      "A clear/reset button that removes all active filters and restores the full employee list",
+      "Filtering applies to both the summary table and the expandable employee cards sections",
+      "All existing CRUD operations (add, update, delete employee) continue to work unchanged",
+      "Input sanitization: salary filter values must be non-negative integers; non-numeric input is ignored gracefully"
+    ],
+    "should_have": [
+      "Filter controls are visually co-located as a cohesive filter bar above or alongside the employee roster",
+      "An empty-state message is shown when no employees match the active filters (e.g., 'No employees match your search')",
+      "Filter state persists in the URL as query parameters (e.g., ?search=Sofia&minSalary=80000) so filtered views can be bookmarked or shared",
+      "The clear button is only visible when at least one filter is active",
+      "The active filter count or summary label (e.g., 'Showing 3 of 6 employees') is displayed in or near the roster heading"
+    ],
+    "nice_to_have": [
+      "Client-side live filtering without a full page reload (debounced input events)",
+      "Filter state preserved across page navigation within the same session",
+      "Salary histogram or range slider for visual salary exploration"
+    ]
+  },
+  "acceptance_criteria": [
+    "Entering a partial name (e.g., 'chen') in the search input shows only employees whose name or title contains that string (case-insensitive)",
+    "Entering a min salary of 100000 hides all employees with a salary below $100,000",
+    "Entering a max salary of 150000 hides all employees with a salary above $150,000",
+    "Applying both min and max salary filters shows only employees within the specified range",
+    "Combining a text search with salary filters narrows results using both criteria simultaneously",
+    "When filters are active, a visible indicator (badge, label, or highlighted state) communicates that results are filtered",
+    "Clicking the clear/reset button removes all filter values and restores the full unfiltered roster",
+    "When no employees match the active filters, a meaningful empty-state message is shown instead of a blank roster",
+    "Non-numeric values entered in the salary fields are ignored and do not cause errors",
+    "All add, update, and delete employee operations work correctly with or without active filters",
+    "The salary statistics in the summary cards (total payroll, average salary, etc.) always reflect all employees, not just the filtered set"
+  ],
+  "out_of_scope": [
+    "Filters applied to the /api/employees JSON endpoint (API responses always return all employees)",
+    "Advanced search operators (AND/OR/NOT, field-specific qualifiers)",
+    "Filtering by manager, home address, or other fields beyond name, title, and salary",
+    "Saved or named filter presets",
+    "Server-side pagination of filtered results",
+    "Authentication or permission-scoped filtering (e.g., hiding sensitive salary data from certain roles)",
+    "Changes to the database schema or existing data model",
+    "Any modifications to the existing employee CRUD forms or their submission logic"
+  ],
+  "open_questions": [
+    "Should filtering be implemented server-side (query parameters trigger a page reload and server re-queries SQLite) or client-side (JavaScript filters the DOM after the full page loads)? Server-side is consistent with the existing Express + redirect pattern; client-side avoids page reloads but adds JavaScript complexity.",
+    "Should the salary summary cards (total payroll, average salary, headcount) update to reflect only the filtered employees, or always reflect all employees regardless of filters? Reflecting all employees avoids confusion and requires no schema changes.",
+    "Should the min/max salary inputs use free-text number fields or a range slider widget? Free-text is simpler and consistent with the existing form style.",
+    "Is there a preferred visual placement for the filter bar — above the roster table, in the left sidebar alongside the add-employee form, or as a collapsible panel?"
+  ]
+}
