@@ -119,60 +119,46 @@ class OpenHandsCloudWorkspace:
         )
         resp.raise_for_status()
         result = resp.json()
-        print(f"POST /app-conversations response keys: {list(result.keys())}")
-        print(f"  app_conversation_id = {result.get('app_conversation_id')!r}")
-        print(f"  id                  = {result.get('id')!r}")
-        print(f"  status              = {result.get('status')!r}")
+
+        # Dump the full response so we can see exactly what the API returns.
+        print(f"POST /app-conversations full response:\n{json.dumps(result, indent=2)}")
 
         # If app_conversation_id is already in the response, we're done.
         if result.get("app_conversation_id"):
             return result
 
-        # Otherwise the API returned a start-task object. Poll until the
-        # real app_conversation_id is available. We try two endpoints:
-        #   1. start-tasks (purpose-built but sometimes slow)
-        #   2. app-conversations/search (broader, usually fast)
+        # The API returned a start-task object. Poll until the real
+        # app_conversation_id is available via three strategies:
+        #   1. GET /app-conversations/start-tasks?ids=  (purpose-built)
+        #   2. GET /app-conversations?ids=              (fetch by id, may resolve)
+        #   3. GET /app-conversations/search?limit=1    (most-recent fallback)
         start_task_id = result["id"]
-        print(f"Conversation is async (start_task_id={start_task_id}), polling for app_conversation_id...")
+        print(f"Async creation (start_task_id={start_task_id}), polling...")
 
-        for attempt in range(30):  # up to 30s
+        for attempt in range(30):  # poll up to 30s
             time.sleep(1)
 
-            # --- strategy 1: start-tasks endpoint ---
-            try:
-                r = httpx.get(
-                    f"{OPENHANDS_API_URL}/app-conversations/start-tasks?ids={start_task_id}",
-                    headers=self.headers,
-                    timeout=10,
-                )
-                if r.status_code == 200:
-                    data = r.json()
-                    items = data if isinstance(data, list) else data.get("items", [])
-                    print(f"  start-tasks response (attempt {attempt+1}): {items}")
-                    if items and items[0].get("app_conversation_id"):
-                        print(f"  Resolved via start-tasks after {attempt+1}s")
-                        return items[0]
-            except Exception as e:
-                print(f"  start-tasks error (attempt {attempt+1}): {e}")
+            for label, url in [
+                ("start-tasks", f"{OPENHANDS_API_URL}/app-conversations/start-tasks?ids={start_task_id}"),
+                ("fetch-by-id", f"{OPENHANDS_API_URL}/app-conversations?ids={start_task_id}"),
+                ("search",      f"{OPENHANDS_API_URL}/app-conversations/search?limit=1"),
+            ]:
+                try:
+                    r = httpx.get(url, headers=self.headers, timeout=10)
+                    print(f"  [{label}] attempt {attempt+1}: status={r.status_code} body={r.text[:300]}")
+                    if r.status_code == 200:
+                        data = r.json()
+                        items = data if isinstance(data, list) else data.get("items", [])
+                        if not isinstance(items, list):
+                            items = [items]
+                        for item in items:
+                            if item.get("app_conversation_id"):
+                                print(f"  Resolved via [{label}] after {attempt+1}s: {item['app_conversation_id']}")
+                                return item
+                except Exception as e:
+                    print(f"  [{label}] attempt {attempt+1} error: {e}")
 
-            # --- strategy 2: search for the most recent conversation ---
-            try:
-                r = httpx.get(
-                    f"{OPENHANDS_API_URL}/app-conversations/search?limit=1",
-                    headers=self.headers,
-                    timeout=10,
-                )
-                if r.status_code == 200:
-                    data = r.json()
-                    items = data if isinstance(data, list) else data.get("items", [])
-                    print(f"  search response (attempt {attempt+1}): {[i.get('app_conversation_id') for i in items]}")
-                    if items and items[0].get("app_conversation_id"):
-                        print(f"  Resolved via search after {attempt+1}s")
-                        return items[0]
-            except Exception as e:
-                print(f"  search error (attempt {attempt+1}): {e}")
-
-        print(f"WARNING: Could not resolve app_conversation_id after 30s; falling back to start_task_id")
+        print("WARNING: Could not resolve app_conversation_id after 30s; falling back to start_task_id")
         return result
 
     def get_conversation_url(self, conversation_id: str) -> str:
