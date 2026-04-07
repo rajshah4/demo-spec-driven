@@ -120,23 +120,28 @@ class OpenHandsCloudWorkspace:
         resp.raise_for_status()
         result = resp.json()
 
-        # If app_conversation_id isn't in the initial response, poll the start-task
+        # If app_conversation_id isn't in the initial response, poll the start-task.
+        # The endpoint may return a list directly or a dict with an "items" key.
         if not result.get("app_conversation_id"):
             start_task_id = result["id"]
             print(f"Conversation creation is async (start_task_id={start_task_id}), polling for app_conversation_id...")
-            for attempt in range(60):  # poll up to 60s
-                time.sleep(1)
-                poll = httpx.get(
-                    f"{OPENHANDS_API_URL}/app-conversations/start-tasks?ids={start_task_id}",
-                    headers=self.headers,
-                    timeout=30,
-                )
-                poll.raise_for_status()
-                items = poll.json().get("items", [])
-                if items and items[0].get("app_conversation_id"):
-                    print(f"Got app_conversation_id after {attempt + 1}s")
-                    return items[0]
-            raise RuntimeError(f"Timed out waiting for app_conversation_id (start_task_id={start_task_id})")
+            try:
+                for attempt in range(60):  # poll up to 60s
+                    time.sleep(1)
+                    poll = httpx.get(
+                        f"{OPENHANDS_API_URL}/app-conversations/start-tasks?ids={start_task_id}",
+                        headers=self.headers,
+                        timeout=30,
+                    )
+                    poll.raise_for_status()
+                    data = poll.json()
+                    items = data if isinstance(data, list) else data.get("items", [])
+                    if items and items[0].get("app_conversation_id"):
+                        print(f"Got app_conversation_id after {attempt + 1}s")
+                        return items[0]
+                print("WARNING: Timed out waiting for app_conversation_id; using start_task_id as fallback")
+            except Exception as e:
+                print(f"WARNING: Error while polling for app_conversation_id: {e}; using start_task_id as fallback")
 
         return result
 
